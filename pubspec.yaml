@@ -39,6 +39,7 @@ dependencies:
   dio:
   get_it:
   dartz:
+  logger:
 
 dev_dependencies:
   flutter_test:
