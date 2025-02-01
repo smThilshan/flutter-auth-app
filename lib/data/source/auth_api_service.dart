@@ -13,9 +13,8 @@ class AuthApiServiceImpl implements AuthApiService {
   @override
   Future signup(SignupReqParams signupReq) async {
     try {
-      var response = await sl<DioClient>().post(ApiUrls.REGISTER);
-      data:
-      signupReq.toMap();
+      var response =
+          await sl<DioClient>().post(ApiUrls.REGISTER, data: signupReq.toMap());
       return right(response);
     } on DioException catch (e) {
       return left(e.response!.data['message']);

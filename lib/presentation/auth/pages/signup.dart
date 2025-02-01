@@ -1,9 +1,18 @@
+import 'package:auth_app/common/bloc/button/button_state.dart';
+import 'package:auth_app/common/bloc/button/button_state_cubit.dart';
 import 'package:auth_app/common/widgets/buttons/basic_app_btn.dart';
+import 'package:auth_app/data/models/signup_req_params.dart';
+import 'package:auth_app/data/source/test_auth_service.dart';
+import 'package:auth_app/domain/usecases/signup.dart';
 import 'package:auth_app/presentation/auth/pages/signin.dart';
+import 'package:auth_app/presentation/home/pages/home.dart';
+import 'package:auth_app/service_locator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class Signup extends StatelessWidget {
+  final AuthService authService = AuthService();
   Signup({super.key});
 
   final TextEditingController _usernameCon = TextEditingController();
@@ -13,34 +22,52 @@ class Signup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _signup(),
-          const SizedBox(
-            height: 50,
-          ),
-          _userNameField(),
-          const SizedBox(
-            height: 20,
-          ),
-          _emailField(),
-          const SizedBox(
-            height: 20,
-          ),
-          _password(),
-          const SizedBox(
-            height: 60,
-          ),
-          _createAccountButton(context),
-          const SizedBox(
-            height: 20,
-          ),
-          _signinText(context)
-        ],
-      )),
+      body: BlocProvider(
+        create: (context) => ButtonStateCubit(ButtonInitialState()),
+        child: BlocListener<ButtonStateCubit, ButtonState>(
+          listener: (context, state) {
+            if (state is ButtonSuccessState) {
+              Navigator.pushReplacement(
+                  context, MaterialPageRoute(builder: (context) => HomePage()));
+            }
+
+            if (state is ButtonFailureState) {
+              var snackBar = SnackBar(content: Text(state.errorMessage));
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            }
+          },
+          child: SafeArea(
+              child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _signup(),
+                const SizedBox(
+                  height: 50,
+                ),
+                _userNameField(),
+                const SizedBox(
+                  height: 20,
+                ),
+                _emailField(),
+                const SizedBox(
+                  height: 20,
+                ),
+                _password(),
+                const SizedBox(
+                  height: 60,
+                ),
+                _createAccountButton(context),
+                const SizedBox(
+                  height: 20,
+                ),
+                _signinText(context)
+              ],
+            ),
+          )),
+        ),
+      ),
     );
   }
 
@@ -75,7 +102,21 @@ class Signup extends StatelessWidget {
 
   Widget _createAccountButton(BuildContext context) {
     return Builder(builder: (context) {
-      return BasicAppButton(title: 'Create Account', onPressed: () {});
+      return BasicAppButton(
+          title: 'Create Account',
+          onPressed: () {
+            context.read<ButtonStateCubit>().excute(
+                  usecase: sl<SignupUseCase>(),
+                  params: SignupReqParams(
+                      username: _usernameCon.text,
+                      email: _emailCon.text,
+                      password: _passwordCon.text),
+                );
+          });
+
+      // onPressed: () {
+      //   authService.registerUser();
+      // });
     });
   }
 
@@ -92,11 +133,11 @@ class Signup extends StatelessWidget {
                 color: Color(0xff3461FD), fontWeight: FontWeight.w500),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SigninPage(),
-                    ));
+                // Navigator.push(
+                //     context,
+                //     MaterialPageRoute(
+                //       builder: (context) => SigninPage(),
+                //     ));
               })
       ]),
     );

@@ -1,115 +1,34 @@
 import 'package:dio/dio.dart';
-import 'interceptors.dart';
+import 'package:logger/logger.dart';
 
-class DioClient {
-  late final Dio _dio;
-  DioClient() {
-    _dio = Dio(
-      BaseOptions(
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        responseType: ResponseType.json,
-        sendTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ),
-    )..interceptors.addAll([LogInterceptor()]);
+/// This interceptor is used to show request and response logs
+class LoggerInterceptor extends Interceptor {
+  Logger logger = Logger(
+      printer: PrettyPrinter(methodCount: 0, colors: true, printEmojis: true));
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    final options = err.requestOptions;
+    final requestPath = '${options.baseUrl}${options.path}';
+    logger.e('${options.method} request ==> $requestPath'); //Error log
+    logger.d('Error type: ${err.error} \n '
+        'Error message: ${err.message}'); //Debug log
+    handler.next(err); //Continue with the Error
   }
 
-  // GET METHOD
-
-  Future<Response> get(
-    String url, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onReceiveProgress,
-  }) async {
-    try {
-      final Response response = await _dio.get(
-        url,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-        onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } on DioException {
-      rethrow;
-    }
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final requestPath = '${options.baseUrl}${options.path}';
+    logger.i('${options.method} request ==> $requestPath'); //Info log
+    handler.next(options); // continue with the Request
   }
 
-  // POST METHOD
-
-  Future<Response> post(
-    String url, {
-    data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
-    try {
-      final Response response = await _dio.post(
-        url,
-        data: data,
-        options: options,
-        onSendProgress: onSendProgress,
-        onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // PUT METHOD
-
-  Future<Response> put(
-    String url, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
-    try {
-      final Response response = await _dio.put(
-        url,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-        onSendProgress: onSendProgress,
-        onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // DELETE METHOD
-
-  Future<dynamic> delete(
-    String url, {
-    data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
-    try {
-      final Response response = await _dio.delete(
-        url,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    logger.d('STATUSCODE: ${response.statusCode} \n '
+        'STATUSMESSAGE: ${response.statusMessage} \n'
+        'HEADERS: ${response.headers} \n'
+        'Data: ${response.data}'); // Debug log
+    handler.next(response); // continue with the Response
   }
 }
