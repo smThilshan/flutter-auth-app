@@ -1,5 +1,6 @@
 import 'package:auth_app/data/models/signup_req_params.dart';
 import 'package:auth_app/data/source/auth_api_service.dart';
+import 'package:auth_app/data/source/auth_local_service.dart';
 import 'package:auth_app/domain/resopisitory/auth.dart';
 import 'package:auth_app/service_locator.dart';
 import 'package:dartz/dartz.dart';
@@ -20,5 +21,10 @@ class AuthRepositoryImpl extends AuthRepository {
       sharedPreferences.setString('token', response.data['token']);
       return Right(response);
     });
+  }
+
+  @override
+  Future<bool> isLoggedIn() async {
+    return await sl<AuthLocalService>().isLoggedIn();
   }
 }
